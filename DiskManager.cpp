@@ -5,7 +5,7 @@ DiskManager::DiskManager() {
 	addr_system = (char*)malloc(SYSTEM_SIZE * sizeof(char));
 
 	// allocate address for super block
-	addr_super_block = (SuperBLock*)addr_system;
+	addr_super_block = (SuperBlock*)addr_system;
 
 	// allocate space for inode bitmap
 	inode_bitmap = addr_system + OFFSET_INODE_BITMAP * BLOCK_SIZE;
@@ -27,24 +27,25 @@ DiskManager::DiskManager() {
 	// initialize root inode
 	root_inode_id = getFreeInode();
 	setInodeBitmap(root_inode_id, true);
+	createInode(root_inode_id, "dir", "root", -1, -1);
 
+	reboot();
 }
 
 DiskManager::~DiskManager() {
-	//FILE* fp;
-	//errno_t err = fopen_s(&fp, "backup.dat", "w");
-	//fwrite(addr_system, sizeof(char), SYSTEM_SIZE, fp);
-	//fclose(fp);
-
+	FILE* fp;
+	fopen_s(&fp, "store.dat", "w");
+	fwrite(addr_system, sizeof(char), SYSTEM_SIZE, fp);
+	fclose(fp);
 	free(addr_system);
 }
 
-void DiskManager::createInode(int inode_id, string type, char* name, int size, int par_id) {
+void DiskManager::createInode(int inode_id, string type, string name, int size, int par_id) {
 	inodes[inode_id].setInodeType(type);
 	inodes[inode_id].setInodeName(name);
 	inodes[inode_id].setInodeSize(size);
 	inodes[inode_id].setParInode(par_id);
-	inodes[inode_id].setTimeCreated(getCurrTime().c_str());
+	inodes[inode_id].setTimeCreated(getTime().c_str());
 	for (int i = 0; i < INODE_DIRECT_ADDR; i++) {
 		inodes[inode_id].setDirectAddr(i, -1);
 	}
@@ -52,8 +53,18 @@ void DiskManager::createInode(int inode_id, string type, char* name, int size, i
 	setInodeBitmap(inode_id, -1);
 }
 
+char* DiskManager::getAddrSystem()
+{
+	return addr_system;
+}
+
 char* DiskManager::getBlockAddrById(int block_id) {
 	return addr_block + (block_id * BLOCK_SIZE);
+}
+
+int DiskManager::getBlockIdByAddr(char* block_ad)
+{
+	return (block_ad - addr_system) / BLOCK_SIZE;
 }
 
 INODE* DiskManager::getInodeAddrById(int inode_id) {
@@ -105,6 +116,14 @@ int DiskManager::getFreeBlock() {
 			free_id = i;
 	}
 	return free_id;
+}
+
+void DiskManager::reboot()
+{
+	FILE* fp;
+	fopen_s(&fp, "store.dat", "r");
+	fread(addr_system, sizeof(char), SYSTEM_SIZE, fp);
+	fclose(fp);
 }
 
 

@@ -15,16 +15,25 @@ const int INODE_TABLE_SIZE = INODE_NUM; //size of one directory
 const int OFFSET_SUPER_BLOCK = 0; 
 const int OFFSET_INODE_BITMAP = OFFSET_SUPER_BLOCK + 1; // one block for super block
 const int OFFSET_DBLOCK_BITMAP = OFFSET_INODE_BITMAP + 1; // one block for inode bitmap
-const int OFFSET_INODE = OFFSET_DBLOCK_BITMAP + 2; // two blocks for data block bitmap
+const int OFFSET_INODE = OFFSET_DBLOCK_BITMAP + 16; // two blocks for data block bitmap
 const int OFFSET_DBLOCK = OFFSET_INODE + 5; // five blocks for inodes
 const int DBLOCK_NUM = BLOCK_NUM - OFFSET_DBLOCK; // rest blocks for data blocks
 
-class SuperBLock {
+class SuperBlock {
+
 private:
-	int magic_num;
-	int num_of_inodes;
-	int num_of_blocks;
-	int start_of_inodes;
+	int magic_num = 0x53;
+	int num_of_inodes = INODE_NUM;
+	int num_of_blocks = BLOCK_NUM;
+	int start_of_inode = OFFSET_INODE;
+
+public:
+	int getMagic() {
+		return magic_num;
+	}
+	void setMagic(int m) {
+		magic_num = m;
+	}
 };
 
 // length of 
@@ -70,8 +79,8 @@ public:
 		return name;
 	}
 
-	void setInodeName(char* str) {
-		memcpy(name, str, 20 * sizeof(char));
+	void setInodeName(string str) {
+		memcpy(name, str.c_str(), 20 * sizeof(char));
 	}
 
 	int getInodeSize() {
